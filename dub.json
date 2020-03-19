@@ -1,0 +1,13 @@
+{
+	"authors": [
+		"Filipp Chertiev"
+	],
+	"copyright": "Copyright © 2020, Filipp Chertiev",
+	"dependencies": {
+		"dyaml": "~>0.8.0",
+		"telega": "~>0.0.9"
+	},
+	"description": "telegram bot for command processing",
+	"license": "proprietary",
+	"name": "lvmetabot"
+}
