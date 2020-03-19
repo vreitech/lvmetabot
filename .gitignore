@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/lvmetabot
+lvmetabot.so
+lvmetabot.dylib
+lvmetabot.dll
+lvmetabot.a
+lvmetabot.lib
+lvmetabot-test-*
+*.exe
+*.o
+*.obj
+*.lst
+*~
