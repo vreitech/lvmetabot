@@ -5,7 +5,19 @@
 	"copyright": "Copyright © 2020, Filipp Chertiev",
 	"dependencies": {
 		"dyaml": "~>0.8.0",
-		"telega": "~>0.0.9"
+		"telega": "~>0.0.9",
+		"vibe-d:tls": "*"
+	},
+	"subConfigurations": {
+		"vibe-d:tls": "openssl-1.1"
+	},
+	"buildTypes": {
+		"debug": {
+			"buildOptions": ["debugMode", "debugInfo", "optimize"]
+		},
+		"release": {
+			"buildOptions": ["releaseMode", "optimize"]
+		},
 	},
 	"description": "telegram bot for command processing",
 	"license": "proprietary",
