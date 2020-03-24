@@ -134,10 +134,12 @@ int main()
 	auto router = new URLRouter;
 	
 	foreach(string botName, ref Node botNode; g_botTree) {
-		auto result = runTask(&botInit, botName, botNode);
-		if(result == true) { router.post(botNode["botUrl"].as!string, &botProcess, botName, botNode); }
+		if(botInit(botName, botNode) == false) {
+			g_botTree.remove(botName);
+		}
 	}
 
+	router.post("/:bot_name", &botProcess);
 	listenHTTP(settings, router);
 
 	return runApplication();
@@ -165,8 +167,9 @@ bool botInit(in string botName, in Node botNode) {
 	return true;
 }
 
-bool botProcess(HTTPServerRequest req, HTTPServerResponse res, in string botName, in Node botNode) {
-	debug { logInfo("D botProcess[" ~ botName ~ "] entered."); scope(exit) { logInfo("D botProcess[" ~ botName ~ "] exited."); } }
+void botProcess(HTTPServerRequest req, HTTPServerResponse res) {
+	debug { logInfo("D botProcess entered."); scope(exit) { logInfo("D botProcess exited."); } }
 
-	debug { logInfo("D botProcess[" ~ botName ~ "]: req.bodyReader == " ~ req.bodyReader().to!string); }
+	if(!g_botTree[req.params["bot_name"]].isValid) { return; }
+	debug { logInfo("D botProcess: req.bodyReader == " ~ req.bodyReader.to!string); }
 }
