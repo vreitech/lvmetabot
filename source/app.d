@@ -10,6 +10,8 @@ import vibe.core.log;
 import vibe.http.server;
 import vibe.http.router;
 import vibe.stream.tls;
+import telega.botapi;
+import telega.drivers.requests : RequestsHttpClient;
 import dyaml;
 
 /// Name of application config file
@@ -129,31 +131,42 @@ int main()
 	settings.tlsContext.useCertificateChainFile("server-cert.pem");
 	settings.tlsContext.usePrivateKeyFile("server-key.pem");
 
-	foreach(string botKey, ref Node botValue; g_botTree) {
-		runTask(&botProcess, botKey, botValue);
+	auto router = new URLRouter;
+	
+	foreach(string botName, ref Node botNode; g_botTree) {
+		auto result = runTask(&botInit, botName, botNode);
+		if(result == true) { router.post(botNode["botUrl"].as!string, &botProcess, botName, botNode); }
 	}
+
+	listenHTTP(settings, router);
 
 	return runApplication();
 }
 
-void botProcess(in string botName, in Node botNode) {
-	debug { logInfo("D botProcess[" ~ botName ~ "].botChat == " ~ botNode["botChat"].get!string); }
+bool botInit(in string botName, in Node botNode) {
+	debug { logInfo("D botInit[" ~ botName ~ "] entered."); scope(exit) { logInfo("D botProcess[" ~ botName ~ "] exited."); } }
+	debug { logInfo("D botInit[" ~ botName ~ "].botChat == " ~ botNode["botChat"].get!string); }
 
-	if(!botNode["botToken"].as!string) { logError("[!] " ~ botName ~ " botToken not found in config, return from thread."); return; }
-	if(!botNode["botUrl"].as!string) { logError("[!] " ~ botName ~ " botUrl not found in config, return from thread."); return; }
-
-	import telega.botapi;
-	import telega.drivers.requests : RequestsHttpClient;
+	if(!botNode["botToken"].as!string) { logError("[!] " ~ botName ~ " botToken not found in config, return from thread."); return false; }
+	if(!botNode["botUrl"].as!string) { logError("[!] " ~ botName ~ " botUrl not found in config, return from thread."); return false; }
 
 	auto client = new RequestsHttpClient();
 	auto api = new BotApi(botNode["botToken"].as!string, BaseApiUrl, client);
 	auto webHookInfo = api.getWebhookInfo();
-	debug { logInfo("D botProcess[" ~ botName
+	debug { logInfo("D botInit[" ~ botName
 		~ "] webHookInfo.url == " ~ webHookInfo.url
-		~ ", webHookInfo.has_custom_certificate == " ~ webHookInfo.has_custom_certificate
+		~ ", webHookInfo.has_custom_certificate == " ~ webHookInfo.has_custom_certificate.to!string
 	); }
 
 	if(!webHookInfo.url) {
 		api.setWebhook(`https://` ~ g_domainName ~ botNode["botUrl"].as!string);
 	}
+
+	return true;
+}
+
+bool botProcess(HTTPServerRequest req, HTTPServerResponse res, in string botName, in Node botNode) {
+	debug { logInfo("D botProcess[" ~ botName ~ "] entered."); scope(exit) { logInfo("D botProcess[" ~ botName ~ "] exited."); } }
+
+	debug { logInfo("D botProcess[" ~ botName ~ "]: req.bodyReader == " ~ req.bodyReader().to!string); }
 }
