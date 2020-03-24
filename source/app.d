@@ -107,7 +107,9 @@ int main()
 			debug { logInfo("D (processing): " ~ f1 ~ ".length == " ~ yamlConfig[f1].length.to!string); }
 			foreach(ref Node botKey, ref Node botValue; yamlConfig[f1]) {
 				debug { logInfo("D (processing): botKey == " ~ botKey.get!string ~ " : botValue == " ~ (botValue.type == NodeType.mapping?"<mapping>":botValue.get!string)); }
-				if(botValue.type == NodeType.mapping) {
+				if(botValue.type == NodeType.mapping
+					&& botInit(botKey.get!string, botValue) == true
+				) {
 					g_botTree[botKey.get!string] = botValue;
 				}
 			}
@@ -117,12 +119,12 @@ int main()
 		}
 	}
 
-	debug { logInfo("D (checking): g_botTree.someanotherbot.botToken == " ~ g_botTree["lvgitpullbot"]["botUrl"].get!string); }
+/*	debug { logInfo("D (checking): g_botTree.someanotherbot.botToken == " ~ g_botTree["lvgitpullbot"]["botUrl"].get!string); }
 	debug {
 		foreach(string botKey, ref Node botValue; g_botTree) {
 			logInfo("D (checking): " ~ botKey ~ " : " ~ botValue["botUrl"].as!string ~ ", " ~ botValue["botChat"].as!long.to!string);
 		}
-	}
+	}*/
 
 	auto settings = new HTTPServerSettings;
 	settings.port = 443;
@@ -133,11 +135,11 @@ int main()
 
 	auto router = new URLRouter;
 	
-	foreach(string botName, ref Node botNode; g_botTree) {
+/*	foreach(string botName, ref Node botNode; g_botTree) {
 		if(botInit(botName, botNode) == false) {
-			g_botTree.remove(botName);
+			free g_botTree[botName];
 		}
-	}
+	}*/
 
 	router.post("/:bot_name", &botProcess);
 	listenHTTP(settings, router);
