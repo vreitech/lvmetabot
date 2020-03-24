@@ -165,6 +165,6 @@ bool botInit(in string botName, in Node botNode) {
 void botProcess(HTTPServerRequest req, HTTPServerResponse res) {
 	debug { logInfo("D botProcess entered."); scope(exit) { res.writeBody(`{"ok": "true"}`); logInfo("D botProcess exited."); } }
 
-	if((g_botTree[req.params["bot_url"]]).isValid == false) { return; }
-	debug { logInfo("D botProcess: req.json['message'] == " ~ req.json["message"].to!string); }
+	//if(!req.params["bot_url"]) { return; }
+	debug { logInfo("D botProcess: req.params['bot_url'] == " ~ req.params["bot_url"] ~ ", req.json['message'] == " ~ req.json["message"].to!string); }
 }
