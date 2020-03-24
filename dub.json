@@ -5,11 +5,15 @@
 	"copyright": "Copyright © 2020, Filipp Chertiev",
 	"dependencies": {
 		"dyaml": "~>0.8.0",
-		"telega": "~>0.0.9",
+		"telega": "~master",
+		"vibe-core": "~>1.6.0",
+		"vibe-d:http": "~>0.8.5",
 		"vibe-d:tls": "*"
 	},
 	"subConfigurations": {
-		"vibe-d:tls": "openssl-1.1"
+		"vibe-d:tls": "openssl-1.1",
+		"telega": "requests-driver",
+		"requests": "vibed"
 	},
 	"buildTypes": {
 		"debug": {
@@ -17,7 +21,7 @@
 		},
 		"release": {
 			"buildOptions": ["releaseMode", "optimize"]
-		},
+		}
 	},
 	"description": "telegram bot for command processing",
 	"license": "proprietary",

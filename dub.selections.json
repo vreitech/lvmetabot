@@ -5,7 +5,7 @@
 		"botan": "1.12.18",
 		"botan-math": "1.0.3",
 		"cachetools": "0.3.1",
-		"diet-ng": "1.6.1",
+		"diet-ng": "1.7.1",
 		"dyaml": "0.8.0",
 		"eventcore": "0.8.50",
 		"libasync": "0.8.6",
@@ -17,7 +17,7 @@
 		"socks-client": "0.1.0",
 		"stdx-allocator": "2.77.5",
 		"taggedalgebraic": "0.11.9",
-		"telega": "0.0.9",
+		"telega": "~master",
 		"tinyendian": "0.2.0",
 		"vibe-core": "1.6.2",
 		"vibe-d": "0.8.5"
