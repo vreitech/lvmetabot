@@ -119,13 +119,6 @@ int main()
 		}
 	}
 
-/*	debug { logInfo("D (checking): g_botTree.someanotherbot.botToken == " ~ g_botTree["lvgitpullbot"]["botUrl"].get!string); }
-	debug {
-		foreach(string botKey, ref Node botValue; g_botTree) {
-			logInfo("D (checking): " ~ botKey ~ " : " ~ botValue["botUrl"].as!string ~ ", " ~ botValue["botChat"].as!long.to!string);
-		}
-	}*/
-
 	auto settings = new HTTPServerSettings;
 	settings.port = 443;
 	settings.bindAddresses = ["0.0.0.0"];
@@ -135,12 +128,6 @@ int main()
 
 	auto router = new URLRouter;
 	
-/*	foreach(string botName, ref Node botNode; g_botTree) {
-		if(botInit(botName, botNode) == false) {
-			free g_botTree[botName];
-		}
-	}*/
-
 	router.post("/:bot_name", &botProcess);
 	listenHTTP(settings, router);
 
@@ -176,8 +163,8 @@ bool botInit(in string botName, in Node botNode) {
 }
 
 void botProcess(HTTPServerRequest req, HTTPServerResponse res) {
-	debug { logInfo("D botProcess entered."); scope(exit) { logInfo("D botProcess exited."); } }
+	debug { logInfo("D botProcess entered."); scope(exit) { res.writeBody(`{"ok": "true"}`); logInfo("D botProcess exited."); } }
 
-	if(!g_botTree[req.params["bot_name"]].isValid) { return; }
-	debug { logInfo("D botProcess: req.bodyReader == " ~ req.queryString.to!string); }
+//	if(!g_botTree[req.params["bot_name"]].isValid) { return; }
+	debug { logInfo("D botProcess: req.bodyReader == " ~ req.queryString); }
 }
