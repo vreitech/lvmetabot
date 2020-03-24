@@ -119,6 +119,10 @@ int main()
 		}
 	}
 
+	foreach(k; g_botTree) {
+		logInfo("D: ", k.as!string);
+	}
+
 	auto settings = new HTTPServerSettings;
 	settings.port = 443;
 	settings.bindAddresses = ["0.0.0.0"];
