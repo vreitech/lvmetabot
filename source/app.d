@@ -110,7 +110,7 @@ int main()
 				if(botValue.type == NodeType.mapping
 					&& botInit(botKey.get!string, botValue) == true
 				) {
-					g_botTree[botKey.get!string] = botValue;
+					g_botTree[botKey["botUrl"].get!string] = botValue;
 				}
 			}
 		} else {
@@ -128,7 +128,7 @@ int main()
 
 	auto router = new URLRouter;
 	
-	router.post("/:bot_name", &botProcess);
+	router.post("/:bot_url", &botProcess);
 	listenHTTP(settings, router);
 
 	return runApplication();
@@ -165,6 +165,6 @@ bool botInit(in string botName, in Node botNode) {
 void botProcess(HTTPServerRequest req, HTTPServerResponse res) {
 	debug { logInfo("D botProcess entered."); scope(exit) { res.writeBody(`{"ok": "true"}`); logInfo("D botProcess exited."); } }
 
-	if((g_botTree[req.params["bot_name"]]).isValid == false) { return; }
+	if((g_botTree[req.params["bot_url"]]).isValid == false) { return; }
 	debug { logInfo("D botProcess: req.json['message'] == " ~ req.json["message"].to!string); }
 }
