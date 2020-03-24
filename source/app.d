@@ -166,5 +166,5 @@ void botProcess(HTTPServerRequest req, HTTPServerResponse res) {
 	debug { logInfo("D botProcess entered."); scope(exit) { res.writeBody(`{"ok": "true"}`); logInfo("D botProcess exited."); } }
 
 	if(!g_botTree[req.params["bot_name"]].isValid) { return; }
-	debug { logInfo("D botProcess: req.bodyReader == " ~ req.json["message"].to!string); }
+	debug { logInfo("D botProcess: req.json['message'] == " ~ req.json["message"].to!string); }
 }
