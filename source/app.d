@@ -13,18 +13,22 @@ const string g_yamlConfigFileName = `config.yml`;
 /// Global command execution gap (deny command execution in gap after previous execution)
 Duration g_execGap;
 /// Global bot token
-string g_botToken = `1017280662:AAHu5nNmBOilY2QuRDJws0kAtqMEDCDQqL8`;
+string g_botToken;
 /// Global array of bots
-string[string] g_bots;
+Node[string] g_botTree;
 
 int main()
 {
+	logInfo("lvmetabot started.");
+	scope(exit) {
+		logInfo("lvmetabot exited.");
+	}
 	if(!g_yamlConfigFileName.exists) {
-		logError("Config file name doesn't point at any file system entry! Exitting...");
+		logError("[!] config file name doesn't point at any file system entry, exiting.");
 		return -1;
 	}
 	if(!g_yamlConfigFileName.isFile) {
-		logError("Config file name doesn't point at regular file! Exitting...");
+		logError("[!] config file name doesn't point at regular file, exiting.");
 		return -2;
 	}
 
@@ -37,9 +41,16 @@ int main()
 	}
 	if("botToken" in yamlConfig) {
 		g_botToken = yamlConfig["botToken"].as!string;
-	} else {
-		g_botToken = `unk`;
 	}
-
+	if("botTree" in yamlConfig && yamlConfig["botTree"].type == NodeType.mapping && yamlConfig["botTree"].length) {
+		foreach(ref Node botKey, ref Node botValue; yamlConfig["botTree"]) {
+			logInfo("D: " ~ botKey.get!string ~ " : " ~ (botValue.type == NodeType.mapping)?"<mapping>":botValue.get!string);
+			g_botTree[botKey.get!string] = botValue;
+		}
+	} else {
+		logError("[!] botTree mapping not found in config, exiting.");
+		return -3;
+	}
+	
 	return 0;
 }
