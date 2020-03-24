@@ -156,13 +156,19 @@ bool botInit(in string botName, in Node botNode) {
 
 	auto client = new RequestsHttpClient();
 	auto api = new BotApi(botNode["botToken"].as!string, BaseApiUrl, client);
-	auto webHookInfo = api.getWebhookInfo();
+	WebhookInfo webhookInfo;
+	try {
+		 webhookInfo = api.getWebhookInfo;
+	} catch(telega.botapi.TelegramBotApiException e) {
+		logWarn("[W] botInit api.getWebhookInfo exception: " ~ e.msg);
+		return false;
+	}
 	debug { logInfo("D botInit[" ~ botName
-		~ "] webHookInfo.url == " ~ webHookInfo.url
-		~ ", webHookInfo.has_custom_certificate == " ~ webHookInfo.has_custom_certificate.to!string
+		~ "] webhookInfo.url == " ~ webhookInfo.url
+		~ ", webhookInfo.has_custom_certificate == " ~ webhookInfo.has_custom_certificate.to!string
 	); }
 
-	if(!webHookInfo.url) {
+	if(!webhookInfo.url) {
 		api.setWebhook(`https://` ~ g_domainName ~ botNode["botUrl"].as!string);
 	}
 
