@@ -146,7 +146,7 @@ int main()
 }
 
 bool botInit(in string botName, in Node botNode) {
-	debug { logInfo("D botInit[" ~ botName ~ "] entered."); scope(exit) { logInfo("D botProcess[" ~ botName ~ "] exited."); } }
+	debug { logInfo("D botInit[" ~ botName ~ "] entered."); scope(exit) { logInfo("D botInit[" ~ botName ~ "] exited."); } }
 	debug { logInfo("D botInit[" ~ botName ~ "].botChat == " ~ botNode["botChat"].get!string); }
 
 	if(!botNode["botToken"].as!string) { logError("[!] " ~ botName ~ " botToken not found in config, return from thread."); return false; }
