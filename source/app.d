@@ -119,8 +119,8 @@ int main()
 		}
 	}
 
-	foreach(k; g_botTree) {
-		logInfo("D: ", k.as!string);
+	foreach(key; g_botTree) {
+		logInfo("D: ", key.as!string);
 	}
 
 	auto settings = new HTTPServerSettings;

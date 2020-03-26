@@ -1,6 +1,6 @@
 globalExecGap: 10
 settings:
-  domainName: "lvmetabot2.td82.ru"
+  domainName: "lvmetabot.td82.ru"
   keyFileName: "server-key.pem"
   certFileName: "server-cert.pem"
 botTree:
