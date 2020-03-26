@@ -1,8 +1,14 @@
 globalExecGap: 10
 settings:
   domainName: "lvmetabot.td82.ru"
-  keyFileName: "server-key.pem"
-  certFileName: "server-cert.pem"
+#  bindProto: "https"
+#  bindAddress: "::"
+#  bindPort: 8443
+#  keyFileName: "server-key.pem"
+#  certFileName: "server-cert.pem"
+  bindProto: "http"
+  bindAddress: "::"
+  bindPort: 8080
 botTree:
   lvgitpullbot:
     botToken: '1042439418:AAHdW788KI38KCmrSo9P0AjIFWzmMpEO8lU'
