@@ -6,6 +6,7 @@
         {
             "type": "dub",
             "run": false,
+            "force": true,
             "compiler": "ldc2",
             "archType": "x86_64",
             "buildType": "debug",
@@ -14,7 +15,23 @@
             "problemMatcher": [
                 "$dmd"
             ],
-            "group": "build"
+            "group": "rebuild"
+        },
+        {
+            "type": "dub",
+            "run": true,
+            "compiler": "ldc2",
+            "archType": "x86_64",
+            "buildType": "debug",
+            "configuration": "application",
+            "_generated": true,
+            "problemMatcher": [
+                "$dmd"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         }
     ]
 }
