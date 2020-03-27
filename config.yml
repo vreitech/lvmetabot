@@ -13,9 +13,38 @@ botTree:
   lvgitpullbot:
     botToken: '1042439418:AAHdW788KI38KCmrSo9P0AjIFWzmMpEO8lU'
     botUrl: '/lvgitpull'
-    botChat: -1001330975219
-    execGap: 10
+    commands:
+      git_pull:
+        exec: "git pull"
+        permissionChatIdMapping:
+          155465626:
+            - 155465626
+          490767837:
+            - 490767837
+          -1001330975219:
+            - 490767837
+            - 155465626
+      ls:
+        exec: "ls"
+        permissionChatIdMapping:
+          155465626:
+            - 155465626
+          490767837:
+            - 490767837
+          -1001330975219:
+            - 490767837
+            - 155465626
   someanotherbot:
     botToken: 'unk'
     botUrl: '/someanother'
-    botChat: -1001330975219
+    commands:
+      ls:
+        exec: "ls"
+        permissionChatIdMapping:
+          155465626:
+            - 155465626
+          490767837:
+            - 490767837
+          -1001330975219:
+            - 490767837
+            - 155465626

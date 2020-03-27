@@ -3,6 +3,8 @@ import std.file : exists, isFile;
 import std.typecons;
 import std.process;
 import std.conv;
+import std.regex;
+import std.process;
 import core.time : Duration, seconds;
 import vibe.data.json;
 import vibe.core.core;
@@ -10,7 +12,7 @@ import vibe.core.log : logInfo, logWarn, logError;
 import vibe.http.server;
 import vibe.http.router;
 import vibe.stream.tls;
-import telega.botapi : BotApi, BaseApiUrl, WebhookInfo;
+import telega.botapi : BotApi, BaseApiUrl, WebhookInfo, ParseMode, SendMessageMethod;
 import telega.drivers.requests : RequestsHttpClient;
 import dyaml;
 
@@ -19,8 +21,6 @@ const string[] c_protos = ["http", "https"];
 
 /// Name of application config file
 const string g_yamlConfigFileName = `config.yml`;
-/// Global command execution gap (deny command execution in gap after previous execution)
-Duration g_execGap;
 
 /// Structure for global settings from config
 struct GlobalSettings {
@@ -41,8 +41,14 @@ struct GlobalSettings {
 /// Global settings
 GlobalSettings g_globalSettings;
 
-/// Global array of bots
-Node[string] g_botTree;
+/// Global command execution gap (deny command execution in gap after previous execution)
+Duration g_execGap;
+
+// /// Global node with yaml config
+// Node yConf;
+
+/// Global array of bot names
+Node* [string] g_botNames;
 
 int main()
 {
@@ -57,90 +63,90 @@ int main()
 		return -1;
 	}
 
-	Node yamlConfig = Loader.fromFile(g_yamlConfigFileName).load();
+	auto yConf = Loader.fromFile(g_yamlConfigFileName).load();
 
-	if("globalExecGap" in yamlConfig) {
-		g_execGap = yamlConfig["globalExecGap"].as!ushort.seconds;
+	if("globalExecGap" in yConf) {
+		g_execGap = yConf["globalExecGap"].as!ushort.seconds;
 	} else {
 		g_execGap = 10.seconds;
 	}
 
 	{
 		auto f1 = "settings";
-		if(f1 in yamlConfig
-			&& yamlConfig[f1].type == NodeType.mapping
-			&& yamlConfig[f1].length >= 1
+		if(f1 in yConf
+			&& yConf[f1].type == NodeType.mapping
+			&& yConf[f1].length >= 1
 		)
 		{
 			{
 				auto f2 = "bindProto";
-				if(!f2 in yamlConfig[f1]
-					|| !yamlConfig[f1][f2].type == NodeType.mapping
-					|| !c_protos.canFind(yamlConfig[f1][f2].get!string)
+				if(!f2 in yConf[f1]
+					|| !yConf[f1][f2].type == NodeType.mapping
+					|| !c_protos.canFind(yConf[f1][f2].as!string)
 				) {
 					logError("[!] " ~ f1 ~ "." ~ f2 ~ " mapping not found in config, or wrong proto, exiting.");
 					return -21;
 				}
-				g_globalSettings.bindProto = yamlConfig[f1][f2].get!string;
+				g_globalSettings.bindProto = yConf[f1][f2].as!string;
 			}
 			{
 				auto f2 = "bindAddress";
-				if(!f2 in yamlConfig[f1]
-					|| !yamlConfig[f1][f2].type == NodeType.mapping
-					||  yamlConfig[f1][f2].get!string == ""
+				if(!f2 in yConf[f1]
+					|| !yConf[f1][f2].type == NodeType.mapping
+					||  yConf[f1][f2].as!string == ""
 				) {
 					logError("[!] " ~ f1 ~ "." ~ f2 ~ " mapping not found in config, exiting.");
 					return -22;
 				}
-				g_globalSettings.bindAddress = yamlConfig[f1][f2].get!string;
+				g_globalSettings.bindAddress = yConf[f1][f2].as!string;
 			}
 			{
 				auto f2 = "bindPort";
-				if(!f2 in yamlConfig[f1]
-					|| !yamlConfig[f1][f2].type == NodeType.mapping
-					||  yamlConfig[f1][f2].get!string == ""
+				if(!f2 in yConf[f1]
+					|| !yConf[f1][f2].type == NodeType.mapping
+					||  yConf[f1][f2].as!string == ""
 				) {
 					logError("[!] " ~ f1 ~ "." ~ f2 ~ " mapping not found in config, exiting.");
 					return -23;
 				}
-				g_globalSettings.bindPort = yamlConfig[f1][f2].get!ushort;
+				g_globalSettings.bindPort = yConf[f1][f2].as!ushort;
 			}
 			if(g_globalSettings.bindProto == "https") {
 				auto f2 = "keyFileName";
-				if(!f2 in yamlConfig[f1]
-					|| !yamlConfig[f1][f2].type == NodeType.mapping
-					||  yamlConfig[f1][f2].get!string == ""
-					|| !yamlConfig[f1][f2].get!string.exists
-					|| !yamlConfig[f1][f2].get!string.isFile
+				if(!f2 in yConf[f1]
+					|| !yConf[f1][f2].type == NodeType.mapping
+					||  yConf[f1][f2].as!string == ""
+					|| !yConf[f1][f2].as!string.exists
+					|| !yConf[f1][f2].as!string.isFile
 				) {
 					logError("[!] " ~ f1 ~ "." ~ f2 ~ " mapping not found in config, or no file with that name, exiting.");
 					return -24;
 				}
-				g_globalSettings.keyFileName = yamlConfig[f1][f2].get!string;
+				g_globalSettings.keyFileName = yConf[f1][f2].as!string;
 			}
 			if(g_globalSettings.bindProto == "https") {
 				auto f2 = "certFileName";
-				if(!f2 in yamlConfig[f1]
-					|| !yamlConfig[f1][f2].type == NodeType.mapping
-					||  yamlConfig[f1][f2].get!string == ""
-					|| !yamlConfig[f1][f2].get!string.exists
-					|| !yamlConfig[f1][f2].get!string.isFile
+				if(!f2 in yConf[f1]
+					|| !yConf[f1][f2].type == NodeType.mapping
+					||  yConf[f1][f2].as!string == ""
+					|| !yConf[f1][f2].as!string.exists
+					|| !yConf[f1][f2].as!string.isFile
 				) {
 					logError("[!] " ~ f1 ~ "." ~ f2 ~ " mapping not found in config, or no file with that name, exiting.");
 					return -25;
 				}
-				g_globalSettings.certFileName = yamlConfig[f1][f2].get!string;
+				g_globalSettings.certFileName = yConf[f1][f2].as!string;
 			}
 			{
 				auto f2 = "domainName";
-				if(!f2 in yamlConfig[f1]
-					|| !yamlConfig[f1][f2].type == NodeType.mapping
-					||  yamlConfig[f1][f2].get!string == ""
+				if(!f2 in yConf[f1]
+					|| !yConf[f1][f2].type == NodeType.mapping
+					||  yConf[f1][f2].as!string == ""
 				) {
 					logError("[!] " ~ f1 ~ "." ~ f2 ~ " mapping not found in config, exiting.");
 					return -26;
 				}
-				g_globalSettings.domainName = yamlConfig[f1][f2].get!string;
+				g_globalSettings.domainName = yConf[f1][f2].as!string;
 			}
 		} else {
 			logError("[!] " ~ f1 ~ " mapping not found in config, exiting.");
@@ -150,27 +156,23 @@ int main()
 
 	{
 		auto f1 = "botTree";
-		if(f1 in yamlConfig
-			&& yamlConfig[f1].type == NodeType.mapping
-			&& yamlConfig[f1].length >= 1
+		if(f1 in yConf
+			&& yConf[f1].type == NodeType.mapping
+			&& yConf[f1].length >= 1
 		) {
-			debug { logInfo("D (processing): " ~ f1 ~ ".length == " ~ yamlConfig[f1].length.to!string); }
-			foreach(ref Node botKey, ref Node botValue; yamlConfig[f1]) {
-				debug { logInfo("D (processing): botKey == " ~ botKey.get!string ~ " : botValue == " ~ (botValue.type == NodeType.mapping?"<mapping>":botValue.get!string)); }
+			debug { logInfo("D (processing): " ~ f1 ~ ".length == " ~ yConf[f1].length.to!string); }
+			foreach(Node botKey, ref Node botValue; yConf[f1]) {
+				debug { logInfo("D (processing): botKey == " ~ botKey.as!string ~ " : botValue == " ~ (botValue.type == NodeType.mapping?"<mapping>":botValue.as!string)); }
 				if(botValue.type == NodeType.mapping
-					&& botInit(botKey.get!string, botValue) == true
+					&& botInit(botKey.as!string, botValue) == true
 				) {
-					g_botTree[botValue["botUrl"].get!string] = botValue;
+					g_botNames[botKey.as!string] = &botValue;
 				}
 			}
 		} else {
 			logError("[!] " ~ f1 ~ " mapping not found in config, exiting.");
 			return -3;
 		}
-	}
-
-	foreach(key; g_botTree) {
-		logInfo("D: ", key);
 	}
 
 	auto settings = new HTTPServerSettings;
@@ -193,7 +195,7 @@ int main()
 /// Function for init botNode's
 bool botInit(in string botName, in Node botNode) {
 	debug { logInfo("D botInit[" ~ botName ~ "] entered."); scope(exit) { logInfo("D botInit[" ~ botName ~ "] exited."); } }
-	debug { logInfo("D botInit[" ~ botName ~ "].botChat == " ~ botNode["botChat"].get!string); }
+	debug { logInfo("D botInit[" ~ botName ~ "] processing."); }
 
 	if(!botNode["botToken"].as!string) {
 		logError("[!] " ~ botName ~ " botToken not found in config, return from thread."); return false;
@@ -225,10 +227,57 @@ bool botInit(in string botName, in Node botNode) {
 
 /// Function for process incoming messages
 void botProcess(HTTPServerRequest req, HTTPServerResponse res) {
+	string botName;
+
 	debug { logInfo("D botProcess entered."); scope(exit) { res.writeBody(`{"ok": "true"}`); logInfo("D botProcess exited."); } }
 
-	if((`/` ~ req.params["bot_url"]) !in g_botTree) { return; }
+	/// Determining according bot or nether
+	foreach(string botKey, Node* botValue; g_botNames) {
+		debug { logInfo("D botProcess: (req.params['bot_url'] == " ~ "/" ~ req.params["bot_url"] ~ ") ==? (botValue['botUrl'] == " ~ (*botValue)["botUrl"].as!string ~ ")"); }
+		if((*botValue)["botUrl"].as!string == ("/" ~ req.params["bot_url"])) {
+			debug { logInfo("D botProcess: req.params['bot_url'] equals to botValue['botUrl']"); }
+			botName = botKey;
+			break;
+		}
+		return;
+	}
 	debug { logInfo("D botProcess: req.requestURI == " ~ req.requestURI ~ ", req.requestPath == ", req.requestPath); }
-	debug { logInfo("D botProcess: req.params['bot_url'] == " ~ req.params["bot_url"] ~ ", req.json['message'] == " ~ req.json["message"].toString); }
+	debug { logInfo("D botProcess: req.params['bot_url'] == " ~ req.params["bot_url"] ~ ", req.json['message'] ==\n" ~ req.json["message"].toPrettyString); }
 	debug { logInfo("D botProcess: from.id == " ~ req.json["message"]["from"]["id"].toString ~ ", chat.id == " ~ req.json["message"]["chat"]["id"].toString); }
+
+	auto re = regex(`^\/(.*?)(?:@` ~ botName ~ `)?(?=$|\s)`,`g`);
+	auto rCommand = replaceFirst(req.json["message"]["text"].get!string, re, `$1`);
+	debug { logInfo("D botProcess: rCommand == " ~ rCommand); }
+// split into ["first_word", "other words"]
+//	auto splitCommand = split(rCommand, regex(`(?<=^\S+)\s`));
+	auto splitCommand = split(rCommand, regex(`\s+`));
+	debug { logInfo("D botProcess: splitCommand == " ~ splitCommand.to!string); }
+	if(req.json["message"]["entities"][0]["type"] == "bot_command"
+		&& (*g_botNames[botName])["commands"].containsKey(splitCommand[0])
+	) {
+		debug { logInfo("D botProcess: botName == splitCommand[0]"); }
+		if((*g_botNames[botName])["commands"][splitCommand[0]].containsKey("exec")) {
+			logInfo("TRY EXECUTE");
+			auto client = new RequestsHttpClient();
+			auto api = new BotApi((*g_botNames[botName])["botToken"].as!string, BaseApiUrl, client);
+/*			api.sendMessage(
+				req.json["message"]["chat"]["id"].get!ulong,
+				executeShell(
+					(*g_botNames[botName])["commands"][splitCommand[0]]["exec"].as!string
+					~ (splitCommand.length > 1 && !matchAll(splitCommand[1], r"[;&!$%+=^`]")?" " ~ splitCommand[1]:"")
+				).output
+			);*/
+			auto m = SendMessageMethod();
+			m.chat_id = req.json["message"]["chat"]["id"].get!ulong;
+			m.text = "<code>"
+			~ executeShell(
+					(*g_botNames[botName])["commands"][splitCommand[0]]["exec"].as!string
+					~ (splitCommand.length > 1 && !matchAll(splitCommand[1], r"[;&!$%+=^`]")?" " ~ splitCommand[1]:"")
+				).output
+			~ "</code>";
+			m.parse_mode = ParseMode.HTML;
+			m.disable_notification = true;
+			api.sendMessage(m);
+		}
+	}
 }
