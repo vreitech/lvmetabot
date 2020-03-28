@@ -240,10 +240,14 @@ bool botInit(in string botName, in Node botNode) {
 
 /// Function for process incoming messages
 void botProcess(HTTPServerRequest req, HTTPServerResponse res) {
+	debug { logInfo("D botProcess entered."); }
+
 	string botName;
 
-	scope(exit) { res.writeBody(`{"ok": "true"}`); debug { logInfo("D botProcess exited."); } }
-	debug { logInfo("D botProcess entered."); }
+	scope(exit) {
+		res.writeBody(`{"ok": "true"}`);
+		debug { logInfo("D botProcess exited."); }
+	}
 
 	/// Determining according bot or nether
 	foreach(string botKey, Node* botValue; g_botNames) {
@@ -259,22 +263,56 @@ void botProcess(HTTPServerRequest req, HTTPServerResponse res) {
 	debug { logInfo("D botProcess: req.params['bot_url'] == " ~ req.params["bot_url"] ~ ", req.json['message'] ==\n" ~ req.json["message"].toPrettyString); }
 	debug { logInfo("D botProcess: from.id == " ~ req.json["message"]["from"]["id"].toString ~ ", chat.id == " ~ req.json["message"]["chat"]["id"].toString); }
 
+	/// Objects for sending message to telegram API
+	auto client = new RequestsHttpClient();
+	auto api = new BotApi((*g_botNames[botName])["botToken"].as!string, BaseApiUrl, client);
+	auto m = SendMessageMethod();
+
+	/// Determining command
 	auto re = regex(`^\/(.*?)(?:@` ~ botName ~ `)?(?=$|\s)`,`g`);
 	auto rCommand = replaceFirst(req.json["message"]["text"].get!string, re, `$1`);
 	debug { logInfo("D botProcess: rCommand == " ~ rCommand); }
 // split into ["first_word", "other words"]
-//	auto splitCommand = split(rCommand, regex(`(?<=^\S+)\s`));
+/*	auto splitCommand = split(rCommand, regex(`(?<=^\S+)\s`)); */
 	auto splitCommand = split(rCommand, regex(`\s+`));
 	debug { logInfo("D botProcess: splitCommand == " ~ splitCommand.to!string); }
 	if(req.json["message"]["entities"][0]["type"] == "bot_command"
 		&& (*g_botNames[botName])["commands"].containsKey(splitCommand[0])
 	) {
 		debug { logInfo("D botProcess: botName == splitCommand[0]"); }
+
+		/// Determining permissions
+		debug { logInfo("D botProcess: determining permissions"); }
+		debug { logInfo("D botProcess: determining permissionChatIdMapping"); }
+		if(
+			!(*g_botNames[botName])["commands"][splitCommand[0]].containsKey("permissionChatIdMapping")
+			|| !(*g_botNames[botName])["commands"][splitCommand[0]]["permissionChatIdMapping"].containsKey(req.json["message"]["chat"]["id"].get!long)
+			|| !(*g_botNames[botName])["commands"][splitCommand[0]]["permissionChatIdMapping"][req.json["message"]["chat"]["id"].get!long].contains(req.json["message"]["from"]["id"].get!long)
+		) {
+			debug { logInfo("D botProcess: from.id not found"); }
+			logWarn(
+				"[!] '" ~ req.json["message"]["from"]["first_name"].get!string ~ " "
+				~ req.json["message"]["from"]["last_name"].get!string
+				~ "' have not permission to execute '" ~ splitCommand[0] ~ "'"
+			);
+			m.chat_id = req.json["message"]["chat"]["id"].get!ulong;
+			m.text = "<b>"
+			~ "'" ~ req.json["message"]["from"]["first_name"].get!string ~ " "
+			~ req.json["message"]["from"]["last_name"].get!string
+			~ "' have not permission to execute '" ~ splitCommand[0] ~ "'"
+			~ "</b>";
+			m.parse_mode = ParseMode.HTML;
+			m.disable_notification = true;
+			api.sendMessage(m);
+			destroy(api);
+			destroy(client);
+			return;
+		}
+		else debug { logInfo("D botProcess: permissions is OK"); }
+
+		/// Executing command
 		if((*g_botNames[botName])["commands"][splitCommand[0]].containsKey("exec")) {
 			logInfo("TRY EXECUTE");
-			auto client = new RequestsHttpClient();
-			auto api = new BotApi((*g_botNames[botName])["botToken"].as!string, BaseApiUrl, client);
-			auto m = SendMessageMethod();
 			m.chat_id = req.json["message"]["chat"]["id"].get!ulong;
 			m.text = "<code>"
 			~ executeShell(
@@ -285,8 +323,8 @@ void botProcess(HTTPServerRequest req, HTTPServerResponse res) {
 			m.parse_mode = ParseMode.HTML;
 			m.disable_notification = true;
 			api.sendMessage(m);
-			destroy(api);
-			destroy(client);
 		}
+		destroy(api);
+		destroy(client);
 	}
 }
