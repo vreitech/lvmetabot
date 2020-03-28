@@ -5,6 +5,7 @@ import std.process : executeShell;
 import std.conv;
 import std.regex : regex, matchAll, replaceFirst, split;
 import std.process;
+import std.algorithm.searching : canFind;
 import core.time : Duration, seconds;
 import vibe.data.json;
 import vibe.core.core;
