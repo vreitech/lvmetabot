@@ -163,6 +163,7 @@ int main()
 		}
 	}
 
+	/// Filling g_botNames from config
 	{
 		auto f1 = "botTree";
 		if(f1 in yConf
@@ -170,7 +171,7 @@ int main()
 			&& yConf[f1].length >= 1
 		) {
 			debug { logInfo("D (processing): " ~ f1 ~ ".length == " ~ yConf[f1].length.to!string); }
-			foreach(Node botKey, ref Node botValue; yConf[f1]) {
+			foreach(ref Node botKey, ref Node botValue; yConf[f1]) {
 				debug { logInfo("D (processing): botKey == " ~ botKey.as!string ~ " : botValue == " ~ (botValue.type == NodeType.mapping?"<mapping>":botValue.as!string)); }
 				if(botValue.type == NodeType.mapping
 					&& botInit(botKey.as!string, botValue) == true
@@ -202,7 +203,7 @@ int main()
 }
 
 /// Function for init botNode's
-bool botInit(in string botName, in Node botNode) {
+bool botInit(in string botName, in ref Node botNode) {
 	debug { logInfo("D botInit[" ~ botName ~ "] entered."); scope(exit) { logInfo("D botInit[" ~ botName ~ "] exited."); } }
 	debug { logInfo("D botInit[" ~ botName ~ "] processing."); }
 
