@@ -4,14 +4,14 @@ settings:
 #  bindProto: "https"
 #  bindAddress: "::"
 #  bindPort: 8443
-#  keyFileName: "server-key.pem"
-#  certFileName: "server-cert.pem"
+#  keyFileName: "lvmetabot-key.pem"
+#  certFileName: "lvmetabot-cert.pem"
   bindProto: "http"
   bindAddress: "::"
   bindPort: 8080
 botTree:
   lvgitpullbot:
-    botToken: '1042439418:AAHdW788KI38KCmrSo9P0AjIFWzmMpEO8lU'
+    botToken: 'for_tests'
     botUrl: '/lvgitpull'
     commands:
       git_pull:
