@@ -1,9 +1,9 @@
 import std.stdio;
 import std.file : exists, isFile;
 import std.typecons;
-import std.process;
+import std.process : executeShell;
 import std.conv;
-import std.regex;
+import std.regex : regex, matchAll, replaceFirst, split;
 import std.process;
 import core.time : Duration, seconds;
 import vibe.data.json;
@@ -222,6 +222,8 @@ bool botInit(in string botName, in Node botNode) {
 		api.setWebhook(g_globalSettings.bindProto ~ `://` ~ g_globalSettings.domainName ~ botNode["botUrl"].as!string);
 	}
 
+	destroy(api);
+	destroy(client);
 	return true;
 }
 
@@ -229,7 +231,8 @@ bool botInit(in string botName, in Node botNode) {
 void botProcess(HTTPServerRequest req, HTTPServerResponse res) {
 	string botName;
 
-	debug { logInfo("D botProcess entered."); scope(exit) { res.writeBody(`{"ok": "true"}`); logInfo("D botProcess exited."); } }
+	scope(exit) { res.writeBody(`{"ok": "true"}`); debug { logInfo("D botProcess exited."); } }
+	debug { logInfo("D botProcess entered."); }
 
 	/// Determining according bot or nether
 	foreach(string botKey, Node* botValue; g_botNames) {
@@ -260,13 +263,6 @@ void botProcess(HTTPServerRequest req, HTTPServerResponse res) {
 			logInfo("TRY EXECUTE");
 			auto client = new RequestsHttpClient();
 			auto api = new BotApi((*g_botNames[botName])["botToken"].as!string, BaseApiUrl, client);
-/*			api.sendMessage(
-				req.json["message"]["chat"]["id"].get!ulong,
-				executeShell(
-					(*g_botNames[botName])["commands"][splitCommand[0]]["exec"].as!string
-					~ (splitCommand.length > 1 && !matchAll(splitCommand[1], r"[;&!$%+=^`]")?" " ~ splitCommand[1]:"")
-				).output
-			);*/
 			auto m = SendMessageMethod();
 			m.chat_id = req.json["message"]["chat"]["id"].get!ulong;
 			m.text = "<code>"
@@ -278,6 +274,8 @@ void botProcess(HTTPServerRequest req, HTTPServerResponse res) {
 			m.parse_mode = ParseMode.HTML;
 			m.disable_notification = true;
 			api.sendMessage(m);
+			destroy(api);
+			destroy(client);
 		}
 	}
 }
