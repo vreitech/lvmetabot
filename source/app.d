@@ -20,8 +20,8 @@ import dyaml;
 /// Array of supported protocols
 const string[] c_protos = ["http", "https"];
 
-/// Name of application config file
-const string[] g_yamlConfigFileName = [`lvmetabot.yml`, `/etc/lvmetabot.yml`];
+/// Name of application config file to try
+const string[] g_yamlConfigFileName = [`/etc/lvmetabot.yml`, `lvmetabot.yml`];
 
 /// Structure for global settings from config
 struct GlobalSettings {
@@ -39,18 +39,16 @@ struct GlobalSettings {
 	string certFileName;
 }
 
-/// Global settings
+/// Global settings opject
 GlobalSettings g_globalSettings;
 
-/// Global command execution gap (deny command execution in gap after previous execution)
+/// Global command execution gap (deny command execution in gap time after previous execution)
 Duration g_execGap;
 
-// /// Global node with yaml config
-// Node yConf;
-
-/// Global array of bot names
+/// Global array of bot names and settings
 Node* [string] g_botNames;
 
+/// Main loop
 int main()
 {
 	logInfo("lvmetabot started.");
@@ -291,7 +289,7 @@ void botProcess(HTTPServerRequest req, HTTPServerResponse res) {
 		) {
 			debug { logInfo("D botProcess: from.id not found"); }
 			logWarn(
-				"[!] '" ~ req.json["message"]["from"]["first_name"].get!string ~ " "
+				"[W] '" ~ req.json["message"]["from"]["first_name"].get!string ~ " "
 				~ req.json["message"]["from"]["last_name"].get!string
 				~ "' have not permission to execute '" ~ splitCommand[0] ~ "'"
 			);
