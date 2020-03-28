@@ -1,3 +1,4 @@
+import core.stdc.stdlib : free;
 import std.stdio;
 import std.file : exists, isFile;
 import std.typecons;
@@ -53,6 +54,9 @@ int main()
 {
 	logInfo("lvmetabot started.");
 	scope(exit) {
+		foreach(p; g_botNames) {
+			free(p);
+		}
 		logInfo("lvmetabot exited.");
 	}
 	bool noConfigFile = true;
