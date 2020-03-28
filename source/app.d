@@ -20,7 +20,7 @@ import dyaml;
 const string[] c_protos = ["http", "https"];
 
 /// Name of application config file
-const string g_yamlConfigFileName = `config.yml`;
+const string[] g_yamlConfigFileName = [`lvmetabot.yml`, `/etc/lvmetabot.yml`];
 
 /// Structure for global settings from config
 struct GlobalSettings {
@@ -56,14 +56,24 @@ int main()
 	scope(exit) {
 		logInfo("lvmetabot exited.");
 	}
-	if(!g_yamlConfigFileName.exists
-		|| !g_yamlConfigFileName.isFile
+	bool noConfigFile = true;
+	ushort configFileIndex;
+
+	for(ushort i = 0; i < g_yamlConfigFileName.length; i++) {
+		if(g_yamlConfigFileName[i].exists
+			&& g_yamlConfigFileName[i].isFile
 		) {
-		logError("[!] config file name doesn't point to file, exiting.");
+			noConfigFile = false;
+			configFileIndex = i;
+			break;
+		}
+	}
+	if(noConfigFile) {
+		logError("[!] config file not found, exiting.");
 		return -1;
 	}
 
-	auto yConf = Loader.fromFile(g_yamlConfigFileName).load();
+	auto yConf = Loader.fromFile(g_yamlConfigFileName[configFileIndex]).load();
 
 	if("globalExecGap" in yConf) {
 		g_execGap = yConf["globalExecGap"].as!ushort.seconds;
