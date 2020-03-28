@@ -24,6 +24,8 @@
 			"dflags": ["-mattr=+sse4.2"]
 		}
 	},
+	"versions": ["VibeUseOpenSSL11"],
+	"libs-posix": [":libssl.so.1.1", ":libcrypto.so.1.1"],
 	"description": "telegram bot for command processing",
 	"license": "proprietary",
 	"name": "lvmetabot"
