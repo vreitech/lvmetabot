@@ -22,7 +22,7 @@ import dyaml;
 const string[] c_protos = ["http", "https"];
 
 /// Name of application config file to try
-const string[] g_yamlConfigFileName = [`/etc/lvmetabot.yml`, `lvmetabot.yml`];
+const string[] g_yamlConfigFileName = [`lvmetabot.yml`, `/etc/lvmetabot.yml`];
 
 /// Structure for global settings from config
 struct GlobalSettings {
