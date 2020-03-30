@@ -1,6 +1,6 @@
 globalExecGap: 10
 settings:
-  domainName: "lvmetabot.td82.ru"
+  domainName: "h01.td82.ru"
 #  bindProto: "https"
 #  bindAddress: "::"
 #  bindPort: 8443
@@ -11,12 +11,16 @@ settings:
   bindPort: 8080
 botTree:
   lvgitpullbot:
-    botToken: 'for_tests'
-    botUrl: '/lvgitpull'
+    botToken: 'token_here'
+    botUrl: '/tlvmetabot'
     commands:
-      git_pull:
-        exec: "git pull"
+      ls:
+        exec: "ls"
         permissionChatIdMapping:
-          -1001330975219:
-            - 490767837
+          155465626:
+            - 155465626
+      date:
+        exec: "date"
+        permissionChatIdMapping:
+          155465626:
             - 155465626
