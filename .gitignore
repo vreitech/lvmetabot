@@ -14,3 +14,4 @@ lvmetabot-test-*
 *.obj
 *.lst
 *~
+lvmetabot.yml

@@ -280,64 +280,70 @@ void botProcess(HTTPServerRequest req, HTTPServerResponse res) {
 /*	auto splitCommand = split(rCommand, regex(`(?<=^\S+)\s`)); */
 	auto splitCommand = split(rCommand, regex(`\s+`));
 	debug { logInfo("D botProcess: splitCommand == " ~ splitCommand.to!string); }
-	if(
-		req.json["message"]["entities"][0]["type"] == "bot_command"
-		&& (*g_botNames[botName])["commands"].containsKey(splitCommand[0])
-	) {
-		debug { logInfo("D botProcess: splitCommand[0] in botName.commands"); }
 
-		/// Determining permissions
-		debug { logInfo("D botProcess: determining permissions"); }
-		debug { logInfo("D botProcess: determining permissionChatIdMapping"); }
+	with((*g_botNames[botName])["commands"]) {
 		if(
-			!(*g_botNames[botName])["commands"][splitCommand[0]].containsKey("permissionChatIdMapping")
-			|| !(*g_botNames[botName])["commands"][splitCommand[0]]["permissionChatIdMapping"].containsKey(req.json["message"]["chat"]["id"].get!long)
-			|| !(*g_botNames[botName])["commands"][splitCommand[0]]["permissionChatIdMapping"][req.json["message"]["chat"]["id"].get!long].contains(req.json["message"]["from"]["id"].get!long)
+			req.json["message"]["entities"][0]["type"] == "bot_command"
+			&& containsKey(splitCommand[0])
 		) {
-			debug { logInfo("D botProcess: from.id not found"); }
-			logWarn(
-				"[W] '" ~ req.json["message"]["from"]["first_name"].get!string ~ " "
-				~ req.json["message"]["from"]["last_name"].get!string
-				~ "' have not permission to execute '" ~ splitCommand[0] ~ "'"
-			);
-			m.chat_id = req.json["message"]["chat"]["id"].get!ulong;
-			m.text = "<b>"
-			~ "'" ~ req.json["message"]["from"]["first_name"].get!string ~ " "
-			~ req.json["message"]["from"]["last_name"].get!string
-			~ "' have not permission to execute '" ~ splitCommand[0] ~ "'"
-			~ "</b>";
-			m.parse_mode = ParseMode.HTML;
-			m.disable_notification = true;
-			api.sendMessage(m);
+			debug { logInfo("D botProcess: splitCommand[0] in botName.commands"); }
+
+			/// Determining permissions
+			debug { logInfo("D botProcess: determining permissions"); }
+			debug { logInfo("D botProcess: determining permissionChatIdMapping"); }
+			with(opIndex(splitCommand[0])) {
+				if(
+					!containsKey("permissionChatIdMapping")
+					|| !opIndex("permissionChatIdMapping").containsKey(req.json["message"]["chat"]["id"].get!long)
+					|| !opIndex("permissionChatIdMapping")[req.json["message"]["chat"]["id"].get!long].contains(req.json["message"]["from"]["id"].get!long)
+				) {
+					debug { logInfo("D botProcess: from.id not found"); }
+					logWarn(
+						"[W] '" ~ req.json["message"]["from"]["first_name"].get!string ~ " "
+						~ req.json["message"]["from"]["last_name"].get!string
+						~ "' have not permission to execute '" ~ splitCommand[0] ~ "'"
+					);
+					m.chat_id = req.json["message"]["chat"]["id"].get!ulong;
+					m.text = "<b>"
+					~ "'" ~ req.json["message"]["from"]["first_name"].get!string ~ " "
+					~ req.json["message"]["from"]["last_name"].get!string
+					~ "' have not permission to execute '" ~ splitCommand[0] ~ "'"
+					~ "</b>";
+					m.parse_mode = ParseMode.HTML;
+					m.disable_notification = true;
+					api.sendMessage(m);
+					destroy(api);
+					destroy(client);
+					return;
+				}
+				else debug { logInfo("D botProcess: permissions is OK"); }
+
+				/// Executing command
+				if(containsKey("exec")) {
+					logInfo(
+						"[I] Execute '" ~ opIndex("exec").as!string
+						~ "' by '" ~ req.json["message"]["from"]["id"].get!long.to!string ~ " ("
+						~ req.json["message"]["from"]["first_name"].get!string ~ " "
+						~ req.json["message"]["from"]["last_name"].get!string ~ ")'"
+					);
+					m.chat_id = req.json["message"]["chat"]["id"].get!ulong;
+					m.text = "<code>"
+					~ executeShell(
+							opIndex("exec").as!string
+	// disabled as potentially insecure
+	//						~ (splitCommand.length > 1 && !matchAll(splitCommand[1], r"[;&!$%+=^`]")?" " ~ splitCommand[1]:"")
+						).output
+					~ "</code>";
+					m.parse_mode = ParseMode.HTML;
+					m.disable_notification = true;
+					api.sendMessage(m);
+				} else debug { logInfo("D botProcess: command '" ~ splitCommand[0] ~ "' have not 'exec' string in config."); }
+			}
+
 			destroy(api);
 			destroy(client);
-			return;
+		} else {
+			debug { logInfo("D botProcess: not a command."); }
 		}
-		else debug { logInfo("D botProcess: permissions is OK"); }
-
-		/// Executing command
-		if((*g_botNames[botName])["commands"][splitCommand[0]].containsKey("exec")) {
-			logInfo(
-				"[I] Execute '" ~ (*g_botNames[botName])["commands"][splitCommand[0]]["exec"].as!string
-				~ "' by '" ~ req.json["message"]["from"]["id"].get!long.to!string ~ " ("
-				~ req.json["message"]["from"]["first_name"].get!string ~ " "
-				~ req.json["message"]["from"]["last_name"].get!string ~ ")'"
-			);
-			m.chat_id = req.json["message"]["chat"]["id"].get!ulong;
-			m.text = "<code>"
-			~ executeShell(
-					(*g_botNames[botName])["commands"][splitCommand[0]]["exec"].as!string
-// disabled as potentially insecure
-//					~ (splitCommand.length > 1 && !matchAll(splitCommand[1], r"[;&!$%+=^`]")?" " ~ splitCommand[1]:"")
-				).output
-			~ "</code>";
-			m.parse_mode = ParseMode.HTML;
-			m.disable_notification = true;
-			api.sendMessage(m);
-		} else debug { logInfo("D botProcess: command '" ~ splitCommand[0] ~ "' have not 'exec' string in config."); }
-		destroy(api);
-		destroy(client);
-	} else {
-		debug { logInfo("D botProcess: not a command."); }
 	}
 }
