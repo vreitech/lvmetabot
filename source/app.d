@@ -232,8 +232,9 @@ bool botInit(in string botName, in ref Node botNode) {
 		~ ", webhookInfo.has_custom_certificate == " ~ webhookInfo.has_custom_certificate.to!string
 	); }
 
+	// Try to set webhook, if it's not set
 	if(!webhookInfo.url) {
-		api.setWebhook(g_globalSettings.bindProto ~ `://` ~ g_globalSettings.domainName ~ botNode["botUrl"].as!string);
+		api.setWebhook(`https://` ~ g_globalSettings.domainName ~ botNode["botUrl"].as!string);
 	}
 
 	destroy(api);
@@ -283,7 +284,7 @@ void botProcess(HTTPServerRequest req, HTTPServerResponse res) {
 		req.json["message"]["entities"][0]["type"] == "bot_command"
 		&& (*g_botNames[botName])["commands"].containsKey(splitCommand[0])
 	) {
-		debug { logInfo("D botProcess: botName == splitCommand[0]"); }
+		debug { logInfo("D botProcess: splitCommand[0] in botName.commands"); }
 
 		/// Determining permissions
 		debug { logInfo("D botProcess: determining permissions"); }
@@ -316,18 +317,24 @@ void botProcess(HTTPServerRequest req, HTTPServerResponse res) {
 
 		/// Executing command
 		if((*g_botNames[botName])["commands"][splitCommand[0]].containsKey("exec")) {
-			logInfo("[I] Execute '" ~ (*g_botNames[botName])["commands"][splitCommand[0]]["exec"].as!string ~ "' by '" ~ req.json["message"]["from"]["id"].get!string ~ "'");
+			logInfo(
+				"[I] Execute '" ~ (*g_botNames[botName])["commands"][splitCommand[0]]["exec"].as!string
+				~ "' by '" ~ req.json["message"]["from"]["id"].get!long.to!string ~ " ("
+				~ req.json["message"]["from"]["first_name"].get!string ~ " "
+				~ req.json["message"]["from"]["last_name"].get!string ~ ")'"
+			);
 			m.chat_id = req.json["message"]["chat"]["id"].get!ulong;
 			m.text = "<code>"
 			~ executeShell(
 					(*g_botNames[botName])["commands"][splitCommand[0]]["exec"].as!string
-					~ (splitCommand.length > 1 && !matchAll(splitCommand[1], r"[;&!$%+=^`]")?" " ~ splitCommand[1]:"")
+// disabled as potentially insecure
+//					~ (splitCommand.length > 1 && !matchAll(splitCommand[1], r"[;&!$%+=^`]")?" " ~ splitCommand[1]:"")
 				).output
 			~ "</code>";
 			m.parse_mode = ParseMode.HTML;
 			m.disable_notification = true;
 			api.sendMessage(m);
-		}
+		} else debug { logInfo("D botProcess: command '" ~ splitCommand[0] ~ "' have not 'exec' string in config."); }
 		destroy(api);
 		destroy(client);
 	} else {
