@@ -315,7 +315,7 @@ void botProcess(HTTPServerRequest req, HTTPServerResponse res) {
 
 		/// Executing command
 		if((*g_botNames[botName])["commands"][splitCommand[0]].containsKey("exec")) {
-			logInfo("TRY EXECUTE");
+			logInfo("[I] Execute '" ~ (*g_botNames[botName])["commands"][splitCommand[0]]["exec"].as!string ~ "' by '" ~ req.json["message"]["from"]["id"].get!string ~ "'");
 			m.chat_id = req.json["message"]["chat"]["id"].get!ulong;
 			m.text = "<code>"
 			~ executeShell(
