@@ -279,7 +279,8 @@ void botProcess(HTTPServerRequest req, HTTPServerResponse res) {
 /*	auto splitCommand = split(rCommand, regex(`(?<=^\S+)\s`)); */
 	auto splitCommand = split(rCommand, regex(`\s+`));
 	debug { logInfo("D botProcess: splitCommand == " ~ splitCommand.to!string); }
-	if(req.json["message"]["entities"][0]["type"] == "bot_command"
+	if(
+		req.json["message"]["entities"][0]["type"] == "bot_command"
 		&& (*g_botNames[botName])["commands"].containsKey(splitCommand[0])
 	) {
 		debug { logInfo("D botProcess: botName == splitCommand[0]"); }
@@ -329,5 +330,7 @@ void botProcess(HTTPServerRequest req, HTTPServerResponse res) {
 		}
 		destroy(api);
 		destroy(client);
+	} else {
+		debug { logInfo("D botProcess: not a command."); }
 	}
 }
