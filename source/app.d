@@ -300,7 +300,7 @@ void botProcess(HTTPServerRequest req, HTTPServerResponse res) {
 					debug { logInfo("D botProcess: from.id not found"); }
 					logWarn(
 						"[W] '" ~ req.json["message"]["from"]["first_name"].get!string ~ " "
-						~ req.json["message"]["from"]["last_name"].get!string
+						~ ("last_name" in req.json["message"]["from"]?req.json["message"]["from"]["last_name"].get!string:"")
 						~ "' have not permission to execute '" ~ splitCommand[0] ~ "'"
 					);
 					m.chat_id = req.json["message"]["chat"]["id"].get!ulong;
